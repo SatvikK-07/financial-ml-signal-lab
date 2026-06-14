@@ -1,0 +1,78 @@
+data:
+  symbol: "SPY"
+  assets:
+    - symbol: "SPY"
+      label: "SPY"
+    - symbol: "BTC-USD"
+      label: "Bitcoin"
+    - symbol: "EURUSD=X"
+      label: "EUR/USD"
+      excluded_features:
+        - "upper_wick"
+        - "lower_wick"
+  start_date: "2010-01-01"
+  end_date: null
+  interval: "1d"
+
+target:
+  horizon: 5
+  threshold: 0.005
+
+backtest:
+  initial_capital: 10000
+  transaction_cost: 0.0005
+  position_size: 1.0
+
+model:
+  test_size: 0.2
+  random_state: 42
+
+walk_forward:
+  train_window: 1000
+  test_window: 100
+  step_size: 100
+  purge_rows: 5
+  expanding: false
+
+signal_policy:
+  abstention_thresholds:
+    - 0.0
+    - 0.45
+    - 0.50
+    - 0.55
+    - 0.60
+
+market_intelligence:
+  live_market:
+    enabled: true
+    period: "5d"
+    interval: "5m"
+    include_prepost: true
+    auto_refresh_seconds: 60
+    stale_after_minutes: 15
+  monte_carlo:
+    lookback: 100
+    horizon: 20
+    simulations: 1000
+    displayed_paths: 50
+    confidence_level: 0.95
+    stop_loss_pct: 0.01
+    take_profit_pct: 0.02
+    random_seed: 42
+    method: "iid_bootstrap"
+    block_size: 5
+  data_integrity:
+    lookback: 252
+    stale_after_days: 3
+    jump_threshold: 0.08
+  zones:
+    lookback: 120
+    swing_window: 5
+    proximity_pct: 0.01
+  position_sizing:
+    account_size: 25000
+    contract_size: 100000
+  news_risk:
+    calendar_path: "data/manual/economic_calendar_sample.csv"
+    lookahead_minutes: 120
+    high_impact_window_minutes: 60
