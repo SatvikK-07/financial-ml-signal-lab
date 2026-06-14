@@ -1,7 +1,5 @@
 # Financial ML Signal Lab
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://financial-ml-signal-lab.streamlit.app)
-
 ## What This Project Is
 
 Financial ML Signal Lab is a financial machine-learning and AI trading
