@@ -5,7 +5,11 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from src.dashboard import build_dashboard_research, build_model_comparison
+from src.dashboard import (
+    _clean_model_ready_dataset,
+    build_dashboard_research,
+    build_model_comparison,
+)
 from src.features import create_features, get_feature_columns
 from src.models import train_logistic_regression, train_naive_baseline
 from src.targets import create_directional_target
@@ -27,6 +31,24 @@ def test_model_comparison_returns_sorted_metrics(sample_ohlcv):
     assert comparison["macro_f1"].is_monotonic_decreasing
     assert set(models) == {"Naive", "Logistic"}
     assert set(predictions) == {"Naive", "Logistic"}
+
+
+def test_clean_model_ready_dataset_drops_corrupt_downloaded_rows():
+    dataset = pd.DataFrame(
+        {
+            "date": ["2026-01-01", "2026-01-02", "invalid", "2026-01-04"],
+            "close": [100.0, 101.0, 102.0, 103.0],
+            "feature": [1.0, 2.0, 3.0, float("inf")],
+            "target": [1, 0, -1, 1],
+            "future_return": [0.01, 0.0, -0.01, 0.02],
+        }
+    )
+
+    clean = _clean_model_ready_dataset(dataset, ["feature"])
+
+    assert len(clean) == 2
+    assert clean["date"].notna().all()
+    assert clean["feature"].notna().all()
 
 
 @pytest.mark.slow

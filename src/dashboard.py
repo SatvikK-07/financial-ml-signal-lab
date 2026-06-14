@@ -6,6 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from src.backtester import compare_execution_policies, run_backtest, summarize_backtest
@@ -84,6 +85,7 @@ def build_dashboard_research(
     ]
     if not feature_cols:
         raise ValueError("Feature policy excluded every available model feature.")
+    dataset = _clean_model_ready_dataset(dataset, feature_cols)
     regime_dataset = add_trend_regime(
         add_volatility_regime(dataset, lookback=volatility_lookback)
     )
@@ -205,6 +207,34 @@ def build_dashboard_research(
         )
     )
     return research
+
+
+def _clean_model_ready_dataset(
+    dataset: pd.DataFrame,
+    feature_cols: list[str],
+) -> pd.DataFrame:
+    """Remove corrupt downloaded rows before strict model validation."""
+    required_columns = feature_cols + ["target", "future_return", "close", "date"]
+    missing_columns = set(required_columns).difference(dataset.columns)
+    if missing_columns:
+        raise ValueError(
+            f"Processed dataset is missing required columns: {sorted(missing_columns)}"
+        )
+
+    clean = dataset.copy()
+    clean["date"] = pd.to_datetime(clean["date"], errors="coerce")
+    numeric_columns = [column for column in required_columns if column != "date"]
+    clean[numeric_columns] = (
+        clean[numeric_columns]
+        .apply(pd.to_numeric, errors="coerce")
+        .replace([np.inf, -np.inf], np.nan)
+    )
+    clean = clean.dropna(subset=required_columns).reset_index(drop=True)
+    if len(clean) < 2:
+        raise ValueError(
+            "Processed dataset does not contain enough complete model-ready rows."
+        )
+    return clean
 
 
 def build_model_comparison(
